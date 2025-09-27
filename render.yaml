@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: pigeon-pulse-backend
+    runtime: docker
+    buildCommand: docker build -t pigeon-pulse-backend .
+    startCommand: docker run -p $PORT:8080 pigeon-pulse-backend
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: 86400000
+      - key: CORS_ALLOWED_ORIGINS
+        fromService:
+          type: web
+          name: pigeon-pulse-frontend
+          property: host
+      - key: LOG_LEVEL
+        value: INFO
+      - key: SPRING_SECURITY_LOG_LEVEL
+        value: WARN
