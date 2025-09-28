@@ -46,9 +46,20 @@ public class SecurityConfig {
         if (corsOrigins != null && !corsOrigins.trim().isEmpty()) {
             String[] origins = corsOrigins.split(",");
             configuration.setAllowedOrigins(Arrays.asList(origins));
+            System.out.println("🔒 CORS Origins configurados: " + Arrays.toString(origins));
         } else {
-            // Development defaults
-            configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://localhost:5173", "http://localhost:3000"));
+            // Development defaults - expanded for more development scenarios
+            configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:8080",
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://localhost:8081",
+                "http://localhost:8082",
+                "https://pigeon-pulse-frontend.onrender.com",
+                "https://pigeon-pulse.netlify.app",
+                "https://pigeon-pulse.vercel.app"
+            ));
+            System.out.println("🔒 CORS usando valores por defecto de desarrollo");
         }
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
