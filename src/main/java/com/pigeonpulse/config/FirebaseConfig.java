@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +22,9 @@ public class FirebaseConfig {
     @Value("${firebase.service-account-json:}")
     private String serviceAccountJson;
 
+    @Value("${firebase.service-account-json-file:}")
+    private String serviceAccountJsonFile;
+
     @Value("${firebase.project-id:}")
     private String projectId;
 
@@ -29,8 +33,17 @@ public class FirebaseConfig {
         if (FirebaseApp.getApps().isEmpty()) {
             FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder();
 
-            // Try to use service account JSON from environment variable first
-            if (serviceAccountJson != null && !serviceAccountJson.trim().isEmpty()) {
+            // Try to use service account JSON from file first (for Cloud Run)
+            if (serviceAccountJsonFile != null && !serviceAccountJsonFile.trim().isEmpty()) {
+                try {
+                    InputStream serviceAccountStream = new FileInputStream(serviceAccountJsonFile);
+                    optionsBuilder.setCredentials(GoogleCredentials.fromStream(serviceAccountStream));
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to read Firebase service account JSON from file: " + serviceAccountJsonFile, e);
+                }
+            }
+            // Try to use service account JSON from environment variable
+            else if (serviceAccountJson != null && !serviceAccountJson.trim().isEmpty()) {
                 try {
                     InputStream serviceAccountStream = new ByteArrayInputStream(
                         serviceAccountJson.getBytes(StandardCharsets.UTF_8)
@@ -46,7 +59,7 @@ public class FirebaseConfig {
                     InputStream serviceAccount = new ClassPathResource("firebase-service-account.json").getInputStream();
                     optionsBuilder.setCredentials(GoogleCredentials.fromStream(serviceAccount));
                 } catch (Exception e) {
-                    throw new RuntimeException("Firebase service account not found. Please provide FIREBASE_SERVICE_ACCOUNT_JSON environment variable or place firebase-service-account.json in resources folder", e);
+                    throw new RuntimeException("Firebase service account not found. Please provide FIREBASE_SERVICE_ACCOUNT_JSON_FILE, FIREBASE_SERVICE_ACCOUNT_JSON environment variable or place firebase-service-account.json in resources folder", e);
                 }
             }
 
