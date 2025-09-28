@@ -120,28 +120,41 @@ public class PalomaController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar paloma")
-    public ResponseEntity<PalomaDTO> updatePaloma(@PathVariable String id, @RequestBody PalomaDTO palomaDTO) throws ExecutionException, InterruptedException {
+    public ResponseEntity<PalomaDTO> updatePaloma(@PathVariable String id, @RequestParam(required = false) String palomarId, @RequestBody PalomaDTO palomaDTO) throws ExecutionException, InterruptedException {
         PalomarContext palomarContext = (PalomarContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Usuario usuario = palomarContext.getUsuario();
+
+        System.out.println("🔄 UPDATE PALOMA - ID: " + id + ", User: " + usuario.getId() + ", JWT PalomarId: " + palomarContext.getPalomarId() + ", Provided PalomarId: " + palomarId);
 
         // Get the paloma to check its palomarId
         var palomaOpt = palomaService.findById(id);
         if (!palomaOpt.isPresent()) {
+            System.out.println("❌ Paloma not found: " + id);
             return ResponseEntity.notFound().build();
         }
 
         Paloma existingPaloma = palomaOpt.get();
+        System.out.println("📋 Existing paloma palomarId: " + existingPaloma.getPalomarId());
 
-        // Verify user has access to the palomar where this paloma belongs
-        boolean hasAccess = usuarioPalomarService.hasAccessToPalomar(usuario.getId(), existingPaloma.getPalomarId());
+        // Use provided palomarId or default to the paloma's existing palomarId
+        String targetPalomarId = palomarId != null ? palomarId : existingPaloma.getPalomarId();
+        System.out.println("🎯 Target palomarId: " + targetPalomarId);
+
+        // Verify user has access to the target palomar
+        boolean hasAccess = usuarioPalomarService.hasAccessToPalomar(usuario.getId(), targetPalomarId);
+        System.out.println("🔐 User has access to palomar: " + hasAccess);
+
         if (!hasAccess) {
+            System.out.println("🚫 Access denied for user " + usuario.getId() + " to palomar " + targetPalomarId);
             return ResponseEntity.status(403).build();
         }
 
         Paloma paloma = convertToEntity(palomaDTO);
         paloma.setId(id);
+        paloma.setPalomarId(targetPalomarId); // Ensure the paloma stays in the correct palomar
         palomaService.update(id, paloma);
 
+        System.out.println("✅ Paloma updated successfully: " + id);
         return ResponseEntity.ok(convertToDTO(paloma));
     }
 
