@@ -68,18 +68,38 @@ public class PalomaService {
 
         Paloma paloma = palomaOpt.get();
         List<Paloma> ancestors = new java.util.ArrayList<>();
+        java.util.Set<String> visited = new java.util.HashSet<>();
 
-        // Add father if exists
-        if (paloma.getPadre() != null) {
-            findByAnillo(paloma.getPadre()).ifPresent(ancestors::add);
-        }
-
-        // Add mother if exists
-        if (paloma.getMadre() != null) {
-            findByAnillo(paloma.getMadre()).ifPresent(ancestors::add);
-        }
+        // Recursive function to collect all ancestors
+        collectAncestors(paloma, ancestors, visited);
 
         return ancestors;
+    }
+
+    private void collectAncestors(Paloma paloma, List<Paloma> ancestors, java.util.Set<String> visited) throws ExecutionException, InterruptedException {
+        // Add father if exists and not already visited
+        if (paloma.getPadre() != null && !visited.contains(paloma.getPadre())) {
+            visited.add(paloma.getPadre());
+            Optional<Paloma> fatherOpt = findByAnillo(paloma.getPadre());
+            if (fatherOpt.isPresent()) {
+                Paloma father = fatherOpt.get();
+                ancestors.add(father);
+                // Recursively collect father's ancestors
+                collectAncestors(father, ancestors, visited);
+            }
+        }
+
+        // Add mother if exists and not already visited
+        if (paloma.getMadre() != null && !visited.contains(paloma.getMadre())) {
+            visited.add(paloma.getMadre());
+            Optional<Paloma> motherOpt = findByAnillo(paloma.getMadre());
+            if (motherOpt.isPresent()) {
+                Paloma mother = motherOpt.get();
+                ancestors.add(mother);
+                // Recursively collect mother's ancestors
+                collectAncestors(mother, ancestors, visited);
+            }
+        }
     }
 
     public List<Paloma> getDescendants(String palomaId) throws ExecutionException, InterruptedException {
