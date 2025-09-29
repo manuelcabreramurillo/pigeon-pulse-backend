@@ -41,32 +41,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Read allowed origins from environment variable, fallback to development defaults
-        String corsOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
-        if (corsOrigins != null && !corsOrigins.trim().isEmpty()) {
-            String[] origins = corsOrigins.split(",");
-            configuration.setAllowedOrigins(Arrays.asList(origins));
-            System.out.println("🔒 CORS Origins configurados: " + Arrays.toString(origins));
-        } else {
-            // Development defaults - expanded for more development scenarios
-            configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8080",
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://localhost:8081",
-                "http://localhost:8082",
-                "https://pigeon-pulse-frontend.onrender.com",
-                "https://pigeon-pulse.netlify.app",
-                "https://pigeon-pulse.vercel.app",
-                "https://pigeon-pulse-frontend-123456789012.us-central1.run.app", // Google Cloud Run
-                "*" // Allow all origins for testing - REMOVE IN PRODUCTION
-            ));
-            System.out.println("🔒 CORS usando valores por defecto de desarrollo");
-        }
+        // TEMPORARY: Allow all origins for debugging
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        System.out.println("🔒 CORS: ALLOWING ALL ORIGINS FOR DEBUGGING");
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // Cache preflight for 1 hour
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
