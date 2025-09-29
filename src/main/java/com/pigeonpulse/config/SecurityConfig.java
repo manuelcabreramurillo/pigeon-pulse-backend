@@ -41,9 +41,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // TEMPORARY: Allow all origins for debugging
-        configuration.setAllowedOrigins(Arrays.asList("*"));
-        System.out.println("🔒 CORS: ALLOWING ALL ORIGINS FOR DEBUGGING");
+        // Allow all origins using patterns (works with allowCredentials=true)
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        System.out.println("🔒 CORS: ALLOWING ALL ORIGINS VIA PATTERNS FOR DEBUGGING");
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
