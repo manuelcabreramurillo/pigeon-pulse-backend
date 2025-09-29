@@ -41,14 +41,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow all origins using patterns (works with allowCredentials=true)
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        System.out.println("🔒 CORS: ALLOWING ALL ORIGINS VIA PATTERNS FOR DEBUGGING");
+        // Read allowed origins from environment variable, fallback to development defaults
+        String corsOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+        if (corsOrigins != null && !corsOrigins.trim().isEmpty()) {
+            String[] origins = corsOrigins.split(",");
+            configuration.setAllowedOrigins(Arrays.asList(origins));
+            System.out.println("🔒 CORS Origins configurados: " + Arrays.toString(origins));
+        } else {
+            // Development defaults
+            configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://localhost:5173", "http://localhost:3000"));
+            System.out.println("🔒 CORS usando valores por defecto de desarrollo");
+        }
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L); // Cache preflight for 1 hour
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

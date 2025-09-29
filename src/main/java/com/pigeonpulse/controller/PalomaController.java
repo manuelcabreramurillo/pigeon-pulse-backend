@@ -118,7 +118,7 @@ public class PalomaController {
         return ResponseEntity.ok(convertToDTO(paloma));
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/{id}")
     @Operation(summary = "Actualizar paloma")
     public ResponseEntity<PalomaDTO> updatePaloma(@PathVariable String id, @RequestParam(required = false) String palomarId, @RequestBody PalomaDTO palomaDTO) throws ExecutionException, InterruptedException {
         PalomarContext palomarContext = (PalomarContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
