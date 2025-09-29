@@ -57,7 +57,9 @@ public class SecurityConfig {
                 "http://localhost:8082",
                 "https://pigeon-pulse-frontend.onrender.com",
                 "https://pigeon-pulse.netlify.app",
-                "https://pigeon-pulse.vercel.app"
+                "https://pigeon-pulse.vercel.app",
+                "https://pigeon-pulse-frontend-123456789012.us-central1.run.app", // Google Cloud Run
+                "*" // Allow all origins for testing - REMOVE IN PRODUCTION
             ));
             System.out.println("🔒 CORS usando valores por defecto de desarrollo");
         }
