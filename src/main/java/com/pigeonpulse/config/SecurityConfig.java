@@ -43,8 +43,14 @@ public class SecurityConfig {
 
         // Read allowed origins from environment variable, fallback to development defaults
         String corsOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+        System.out.println("🔒 CORS_ALLOWED_ORIGINS env var: '" + corsOrigins + "'");
+
         if (corsOrigins != null && !corsOrigins.trim().isEmpty()) {
             String[] origins = corsOrigins.split(",");
+            // Trim whitespace from each origin
+            for (int i = 0; i < origins.length; i++) {
+                origins[i] = origins[i].trim();
+            }
             configuration.setAllowedOrigins(Arrays.asList(origins));
             System.out.println("🔒 CORS Origins configurados: " + Arrays.toString(origins));
         } else {
