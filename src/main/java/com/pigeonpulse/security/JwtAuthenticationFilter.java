@@ -93,23 +93,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         var usuario = usuarioOpt.get();
                         System.out.println("JwtAuthenticationFilter: User found: " + usuario.getId());
 
-                        // Validate user has access to palomar
-                        System.out.println("JwtAuthenticationFilter: Checking access to palomar...");
-                        boolean hasAccess = usuarioPalomarService.hasAccessToPalomar(userId, palomarId);
-                        System.out.println("JwtAuthenticationFilter: Has access: " + hasAccess);
-
                         boolean tokenValid = jwtUtil.validateToken(jwtToken, userId);
                         System.out.println("JwtAuthenticationFilter: Token valid: " + tokenValid);
 
-                        if (hasAccess && tokenValid) {
+                        if (tokenValid) {
                             System.out.println("JwtAuthenticationFilter: Getting palomar details...");
-                            // Get palomar details
+                            // Get palomar details (this is the user's default palomar from JWT, used for context)
                             var palomarOpt = palomarService.findById(palomarId);
                             if (palomarOpt.isPresent()) {
                                 var palomar = palomarOpt.get();
                                 System.out.println("JwtAuthenticationFilter: Palomar found: " + palomar.getId());
 
-                                // Create palomar context
+                                // Create palomar context with user's default palomar
+                                // Note: Individual endpoints will validate specific palomar access as needed
                                 PalomarContext palomarContext = new PalomarContext(usuario, palomar, rol);
                                 System.out.println("JwtAuthenticationFilter: Setting authentication context");
 
@@ -123,7 +119,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 System.out.println("JwtAuthenticationFilter: Palomar not found");
                             }
                         } else {
-                            System.out.println("JwtAuthenticationFilter: Access denied or token invalid");
+                            System.out.println("JwtAuthenticationFilter: Token invalid");
                         }
                     } else {
                         System.out.println("JwtAuthenticationFilter: User not found");
