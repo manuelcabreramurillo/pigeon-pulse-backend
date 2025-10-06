@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -277,6 +278,35 @@ public class ReportesController {
         Row totalRow = sheet.createRow(rowNum);
         totalRow.createCell(0).setCellValue("Total de palomas: " + palomas.size());
 
+        // Add logo if present (top right corner)
+        if (request.logoBase64() != null && !request.logoBase64().isEmpty()) {
+            try {
+                // Decode base64 image
+                byte[] imageBytes = Base64.getDecoder().decode(request.logoBase64().split(",")[1]);
+
+                // Create drawing
+                Drawing<?> drawing = sheet.createDrawingPatriarch();
+                ClientAnchor anchor = workbook.getCreationHelper().createClientAnchor();
+
+                // Position logo in top right corner (column 8, row 0)
+                anchor.setCol1(8);
+                anchor.setRow1(0);
+                anchor.setCol2(9);
+                anchor.setRow2(3);
+
+                // Add picture
+                int pictureIdx = workbook.addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
+                Picture picture = drawing.createPicture(anchor, pictureIdx);
+
+                // Resize to fit (approximately 150x150 pixels)
+                picture.resize(2.0, 2.5);
+
+            } catch (Exception e) {
+                // Log error but continue without logo
+                System.err.println("Error adding logo to Excel: " + e.getMessage());
+            }
+        }
+
         // Auto-size columns
         for (int i = 0; i < columnHeaders.length; i++) {
             sheet.autoSizeColumn(i);
@@ -306,7 +336,9 @@ public class ReportesController {
         String telefono,
         String domicilio,
         Filtros filtros,
-        String palomarId
+        String palomarId,
+        String logoBase64,
+        String logoFileName
     ) {}
 
     private List<Paloma> getFilteredPalomas(String palomarId, CensoRequest request) throws ExecutionException, InterruptedException {
