@@ -16,8 +16,6 @@ import com.pigeonpulse.service.PalomarService;
 import com.pigeonpulse.service.UsuarioPalomarService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -197,133 +194,6 @@ public class ReportesController {
                 .body(baos.toByteArray());
     }
 
-    @PostMapping("/censo/excel")
-    @Operation(summary = "Generar censo en Excel")
-    public ResponseEntity<byte[]> generarCensoExcel(@RequestBody CensoRequest request) throws ExecutionException, InterruptedException, IOException {
-        PalomarContext palomarContext = (PalomarContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Usuario usuario = palomarContext.getUsuario();
-
-        // Use provided palomarId or default to JWT context
-        String targetPalomarId = request.palomarId() != null ? request.palomarId() : palomarContext.getPalomarId();
-
-        // Verify user has access to the target palomar
-        boolean hasAccess = usuarioPalomarService.hasAccessToPalomar(usuario.getId(), targetPalomarId);
-        if (!hasAccess) {
-            return ResponseEntity.status(403).build();
-        }
-
-        // Get palomar info for header
-        Palomar palomar = palomarService.findById(targetPalomarId).orElseThrow();
-
-        // Get filtered palomas
-        List<Paloma> palomas = getFilteredPalomas(targetPalomarId, request);
-
-        // Generate Excel
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Censo de Palomas");
-
-        // Header rows
-        Row headerRow1 = sheet.createRow(0);
-        headerRow1.createCell(0).setCellValue("Documento generado por PalomaApp");
-
-        Row headerRow2 = sheet.createRow(1);
-        headerRow2.createCell(0).setCellValue("Censo de Palomas");
-
-        Row headerRow3 = sheet.createRow(2);
-        headerRow3.createCell(0).setCellValue("Palomar: " + palomar.getNombre());
-
-        Row headerRow4 = sheet.createRow(3);
-        headerRow4.createCell(0).setCellValue("Propietario: " + request.nombrePropietario());
-
-        if (request.telefono() != null && !request.telefono().isEmpty()) {
-            Row headerRow5 = sheet.createRow(4);
-            headerRow5.createCell(0).setCellValue("Teléfono: " + request.telefono());
-        }
-
-        if (request.domicilio() != null && !request.domicilio().isEmpty()) {
-            Row headerRow6 = sheet.createRow(5);
-            headerRow6.createCell(0).setCellValue("Domicilio: " + request.domicilio());
-        }
-
-        Row headerRow7 = sheet.createRow(6);
-        headerRow7.createCell(0).setCellValue("Fecha de generación: " +
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-
-        // Empty row
-        sheet.createRow(7);
-
-        // Table headers (row 8)
-        Row tableHeaderRow = sheet.createRow(8);
-        String[] columnHeaders = {"Anillo", "Año", "Sexo", "Color", "Línea", "Estado", "Padre", "Madre", "Observaciones"};
-        for (int i = 0; i < columnHeaders.length; i++) {
-            tableHeaderRow.createCell(i).setCellValue(columnHeaders[i]);
-        }
-
-        // Data rows
-        int rowNum = 9;
-        for (Paloma paloma : palomas) {
-            Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(paloma.getAnillo() != null ? paloma.getAnillo() : "");
-            row.createCell(1).setCellValue(paloma.getAño() != null ? paloma.getAño() : 0);
-            row.createCell(2).setCellValue(paloma.getSexo() != null ? paloma.getSexo() : "");
-            row.createCell(3).setCellValue(paloma.getColor() != null ? paloma.getColor() : "");
-            row.createCell(4).setCellValue(paloma.getLinea() != null ? paloma.getLinea() : "");
-            row.createCell(5).setCellValue(paloma.getEstado() != null ? paloma.getEstado() : "");
-            row.createCell(6).setCellValue(paloma.getPadre() != null ? paloma.getPadre() : "");
-            row.createCell(7).setCellValue(paloma.getMadre() != null ? paloma.getMadre() : "");
-            row.createCell(8).setCellValue(paloma.getObservaciones() != null ? paloma.getObservaciones() : "");
-        }
-
-        // Total row
-        Row totalRow = sheet.createRow(rowNum);
-        totalRow.createCell(0).setCellValue("Total de palomas: " + palomas.size());
-
-        // Add logo if present (top right corner)
-        if (request.logoBase64() != null && !request.logoBase64().isEmpty()) {
-            try {
-                // Decode base64 image
-                byte[] imageBytes = Base64.getDecoder().decode(request.logoBase64().split(",")[1]);
-
-                // Create drawing
-                Drawing<?> drawing = sheet.createDrawingPatriarch();
-                ClientAnchor anchor = workbook.getCreationHelper().createClientAnchor();
-
-                // Position logo in top right corner (column 8, row 0)
-                anchor.setCol1(8);
-                anchor.setRow1(0);
-                anchor.setCol2(9);
-                anchor.setRow2(3);
-
-                // Add picture
-                int pictureIdx = workbook.addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
-                Picture picture = drawing.createPicture(anchor, pictureIdx);
-
-                // Resize to fit (approximately 150x150 pixels)
-                picture.resize(2.0, 2.5);
-
-            } catch (Exception e) {
-                // Log error but continue without logo
-                System.err.println("Error adding logo to Excel: " + e.getMessage());
-            }
-        }
-
-        // Auto-size columns
-        for (int i = 0; i < columnHeaders.length; i++) {
-            sheet.autoSizeColumn(i);
-        }
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        workbook.write(baos);
-        workbook.close();
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
-        httpHeaders.setContentDispositionFormData("attachment", "censo_palomas.xlsx");
-
-        return ResponseEntity.ok()
-                .headers(httpHeaders)
-                .body(baos.toByteArray());
-    }
 
     public record Filtros(
         Integer año,
@@ -336,9 +206,7 @@ public class ReportesController {
         String telefono,
         String domicilio,
         Filtros filtros,
-        String palomarId,
-        String logoBase64,
-        String logoFileName
+        String palomarId
     ) {}
 
     private List<Paloma> getFilteredPalomas(String palomarId, CensoRequest request) throws ExecutionException, InterruptedException {
