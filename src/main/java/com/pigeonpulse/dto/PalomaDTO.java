@@ -13,6 +13,7 @@ public record PalomaDTO(
     String padre,
     String madre,
     String observaciones,
+    String tipoOjo,
     LocalDateTime fechaRegistro,
     String peso,
     String altura,

@@ -214,6 +214,7 @@ public class PalomaController {
             paloma.getPadre(),
             paloma.getMadre(),
             paloma.getObservaciones(),
+            paloma.getTipoOjo(),
             paloma.getFechaRegistro(),
             paloma.getPeso(),
             paloma.getAltura(),
@@ -234,6 +235,7 @@ public class PalomaController {
         paloma.setPadre(palomaDTO.padre());
         paloma.setMadre(palomaDTO.madre());
         paloma.setObservaciones(palomaDTO.observaciones());
+        paloma.setTipoOjo(palomaDTO.tipoOjo());
         paloma.setFechaRegistro(palomaDTO.fechaRegistro());
         paloma.setPeso(palomaDTO.peso());
         paloma.setAltura(palomaDTO.altura());

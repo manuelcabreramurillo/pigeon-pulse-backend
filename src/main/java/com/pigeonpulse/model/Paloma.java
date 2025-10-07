@@ -33,6 +33,8 @@ public class Paloma {
 
     private String observaciones;
 
+    private String tipoOjo; // Tipo de ojo de la paloma
+
     private Timestamp fechaRegistro;
 
     private String peso;
@@ -86,6 +88,9 @@ public class Paloma {
 
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+
+    public String getTipoOjo() { return tipoOjo; }
+    public void setTipoOjo(String tipoOjo) { this.tipoOjo = tipoOjo; }
 
     @Exclude
     public LocalDateTime getFechaRegistro() {
